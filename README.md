@@ -1,6 +1,6 @@
 This branch shows how multiple defer works in the same function;
 
-### app1
+### 一个函数中的多个defer
 
 在app1.go中展示了，当一个函数中含有多个被声明为defer的函数时，在当前函数结束（正常通过return/异常通过panic）时，**defer的调用顺序为defer声明的反方向；**
 
@@ -34,7 +34,7 @@ Output:
 
 >注意：defer反向调用顺序的陷阱
 
-### app2
+### defer与闭包
 
 app2.go展示了在defer中获取一个闭包函数，使用该闭包函数记录函数的运行时间：
 
@@ -103,7 +103,7 @@ Output:
 
 >   注意：在defer一个闭包时，不要忘记最后的括号
 
-### app3
+### defer修改返回值
 
 app3展示了在defer中也可以修改返回值：
 
@@ -122,7 +122,7 @@ func main() {
 }
 ```
 
-### app4
+### 循环中的defer
 
 app4展示了在一个循环中defer函数的坑；
 
@@ -172,7 +172,7 @@ func main() {
 }
 ```
 
-### app5
+### defer与文件关闭
 
 在示例app5中，通过os.Create打开了一个文件进行写入，但是在关闭时，没有对f.Close采用defer机制，原因是：这可能会产生一些微妙的错误；
 
