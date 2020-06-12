@@ -226,7 +226,92 @@ func fetch(url string) (filename string, n int64, err error) {
 }
 ```
 
+### Return前的Defer
 
+通常情况下，Defer和Java等语言中finally关键字所做的事情类似：在正常或出现异常情况下都关闭资源等；
 
+但是在go中defer是一个函数调用语句，这就意味着，如果执行不到defer语句，则在当前函数正常或异常return时，并不会执行defer函数，例如：
 
+```go
+package main
+
+import "fmt"
+
+func main() {
+	deferTest()
+}
+
+func deferTest() {
+	fmt.Println("Into deferTest...")
+	return
+
+	defer deferCallback()
+	fmt.Println("Leave deferTest...")
+}
+
+func deferCallback() {
+	fmt.Println("Into defer Callback")
+}
+
+// Output：
+Into deferTest...
+```
+
+而如果将defer函数放在函数开头调用，则defer函数会在return时执行，例如：
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	deferTest()
+}
+
+func deferTest() {
+	defer deferCallback()
+	fmt.Println("Into deferTest...")
+	fmt.Println("Leave deferTest...")
+
+	return
+}
+
+func deferCallback() {
+	fmt.Println("Into defer Callback")
+}
+// Output：
+Into deferTest...
+Leave deferTest...
+Into defer Callback
+```
+
+>   **注意：**
+>
+>   **defer是一条语句，在程序实际运行时才能被决定是否被执行**
+>
+>   **而try-catch-finally是一个语句块，在Java中是通过在class文件中创建的异常表来处理的，所以在finally声明的语句，无论如何都会被执行；**
+
+所以在return前声明defer是没有意义的，如：
+
+```go
+package main
+
+import "fmt"
+
+func main() {
+	deferTest()
+}
+
+func deferTest() {
+	fmt.Println("Into deferTest...")
+	fmt.Println("Leave deferTest...")
+//	defer deferCallback()
+    deferCallback()
+	return
+}
+
+func deferCallback() {
+	fmt.Println("Into defer Callback")
+}
+```
 
