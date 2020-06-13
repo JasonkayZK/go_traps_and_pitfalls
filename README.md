@@ -9,5 +9,6 @@ A repository for collecting traps and pitfalls in Golang practicing.
 | [time](https://github.com/JasonkayZK/go_traps_and_pitfalls/tree/time) | 2020-06-12  | 2020-06-12  | traps and pitfalls in golang time          |
 | [init](https://github.com/JasonkayZK/go_traps_and_pitfalls/tree/init) | 2020-06-13  | 2020-06-13  | traps and pitfalls in golang init function |
 | [goroutine](https://github.com/JasonkayZK/go_traps_and_pitfalls/tree/goroutine) | 2020-06-13  | 2020-06-13  | traps and pitfalls in goroutine            |
+| [channel](https://github.com/JasonkayZK/go_traps_and_pitfalls/tree/channel) | 2020-06-13  | 2020-06-13  | traps and pitfalls in go-channel            |
 |                                                              |             |             |                                            |
 
