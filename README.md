@@ -1,16 +1,8 @@
 This branch shows some traps and pitfalls in golang-slice practicing.
 
-### slice在Append时的自动扩容机制
+### slice初始化
 
-在对slice进行append操作时，当slice的元素个数超过当前容量(capacity)的一半，则slice会扩容一倍；
-
-我们可以通过len和cap两个内置函数分别获取slice的元素个数和容量；
-
-但是要注意的是：
-
-**当使用make函数创建slice时指定的初始size大于0时，使用append后，slice中的对象可能不仅仅包括append的对象，还包括多个空对象；**
-
-**甚至使用len求得的元素个数也和调用append加入的元素个数不等(内部含有多个空元素)**
+在对slice进行初始化操作时，要注意在使用make函数创建时传入的len数量将会在slice中添加len个空的元素！
 
 以下面的代码为例：
 
@@ -70,5 +62,5 @@ func main() {
 
 原因在于当在make(T type, len int, cap len)中指定初始化大小len时，会同时创建len个空的元素进入slice中；
 
-所以正确的指定容量初始化一个空的slice应当为`make([]Type, 0, initCap)`;
+所以**正确的指定容量初始化一个空的slice应当为`make([]Type, 0, initCap)`;**
 
