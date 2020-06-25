@@ -10,6 +10,6 @@ A repository for collecting traps and pitfalls in Golang practicing.
 | [init](https://github.com/JasonkayZK/go_traps_and_pitfalls/tree/init) | 2020-06-13  | 2020-06-13  | traps and pitfalls in golang init function |
 | [goroutine](https://github.com/JasonkayZK/go_traps_and_pitfalls/tree/goroutine) | 2020-06-13  | 2020-06-13  | traps and pitfalls in goroutine            |
 | [channel](https://github.com/JasonkayZK/go_traps_and_pitfalls/tree/channel) | 2020-06-13  | 2020-06-13  | traps and pitfalls in go-channel           |
-| [slice](https://github.com/JasonkayZK/go_traps_and_pitfalls/tree/slice) | 2020-06-20  | 2020-06-25 | traps and pitfalls in golang-slice         |
+| [slice](https://github.com/JasonkayZK/go_traps_and_pitfalls/tree/slice) | 2020-06-20  | 2020-06-24 | traps and pitfalls in golang-slice         |
 |                                                              |             |             |                                            |
 
