@@ -122,6 +122,46 @@ func main() {
 }
 ```
 
+但是下面的两段代码却都没有修改返回值：
+
+```go
+func deferReturn1() int {
+	a := 2
+	defer func() {
+		a = a + 2
+	}()
+	return a
+}
+// 控制台输出：2
+```
+
+```go
+func add(i *int) {
+	*i = *i + 2
+}
+
+func deferReturn2() int {
+	a := 2
+	defer add(&a)
+	return a
+}
+// 控制台输出：2
+```
+
+原因是因为：
+
+`return a`代码经过编译后，会被拆分为：
+
+       1. 返回值 = a
+       2. 调用 defer 函数
+       3. return
+
+所以：对于**未声明返回变量名的返回值**会：先放入一个匿名的返回值容器中，然后调用defer函数，最后再将匿名容器中的值返回；
+
+则：通过defer修改返回值的方法为：
+
+<font color="#f00">**通过修改返回值声明的值(显式返回值容器)来修改返回值，如app3中的代码；**</font>
+
 ### 循环中的defer
 
 app4展示了在一个循环中defer函数的坑；
@@ -315,3 +355,173 @@ func deferCallback() {
 }
 ```
 
+### defer函数传参
+
+#### 使用场景
+
+有时希望在当前函数执行后根据执行的结果执行一些操作；
+
+为了保证函数在执行到中途时直接执行return返回，我们需要在程序开始时就声明defer函数，以确保在任何情况下都可以执行defer函数，如下：
+
+```go
+func doSomething() {
+	status := 0
+	
+	defer cleanUpByStatus(status)
+
+	// Job Stuff...
+
+	// Change status, error occurred maybe
+	status = 2
+}
+
+func cleanUpByStatus(status int) {
+	// Do something by status
+	fmt.Println(status)
+}
+
+func main() {
+    // 0
+	doSomething()
+}
+```
+
+但是由于defer函数在**声明时就已经计算出了传函的值**，所以上面在声明了defer函数之后修改了status的之后，并**没有修改传入defer函数的值**；
+
+一个简单的方法是：将defer声明的变量类型改为指针类型，这样在defer声明时传入的其实是变量的指针(地址值)，此后在修改变量的值时，地址下的值也会变化，例如：
+
+```go
+func doSomething() {
+	status := 0
+	
+	defer cleanUpByStatus(&status)
+
+	// Job Stuff...
+
+	// Change status, error occurred maybe
+	status = 2
+}
+
+func cleanUpByStatus(status *int) {
+	// Do something by status
+	fmt.Println(*status)
+}
+
+func main() {
+	// 2
+	doSomething()
+}
+```
+
+下面的说明展示了不同情况下传入defer的变量类型的场景；
+
+#### 说明
+
+① 非引用传参给`defer`调用的函数，且为非闭包函数，值`不会`受后面的改变影响
+
+```go
+func defer1() {
+	a := 3  // a 作为演示的参数
+	defer fmt.Println(a) // 非引用传参，非闭包函数中，a 的值 不会 受后面的改变影响
+	a = a + 2
+}
+// 控制台输出 3
+```
+
+****
+
+② 传递引用给`defer`调用的函数，即使不使用闭包函数，值也`会`受后面的改变影响
+
+```go
+func myPrintln(point *int)  {
+	fmt.Println(*point) // 输出引用所指向的值
+}
+func defer2() {
+	a := 3
+	// &a 是 a 的引用。内存中的形式： 0x .... ---> 3
+	defer myPrintln(&a) // 传递引用给函数，即使不使用闭包函数，值 会 受后面的改变影响
+	a = a + 2
+}
+// 控制台输出 5
+```
+
+****
+
+③ `defer`调用闭包函数，且内调用外部非传参进来的变量，值`会`受后面的改变影响
+
+```go
+// 闭包函数内，事实是该值的引用
+func defer3() {
+	a := 3
+	defer func() {
+        // 闭包函数内调用外部非传参进来的变量，事实是该值的引用，值 会 受后面的改变影响
+		fmt.Println(a) 
+	}()
+	a = a + 2  // 3 + 2 = 5
+}
+// 控制台输出： 5
+```
+
+```go
+// defer4 会抛出数组越界错误。
+func defer4() {
+	a := []int{1,2,3}
+	for i:=0;i<len(a);i++ {
+		// 同 defer3 的闭包形式。因为 i 是外部变量，没用通过传参的形式调用。在闭包内，是引用。
+		// 值 会 受 ++ 改变影响。导致最终 i 是3， a[3] 越界
+		defer func() {
+			fmt.Println(a[i])
+		}()
+	}
+}
+// 结果：数组越界错误
+```
+
+****
+
+④ `defer`调用闭包函数，若内部使用了传参参数的值。使用的是 值
+
+```go
+func defer5() {
+	a := []int{1,2,3}
+	for i:=0; i<len(a); i++ {
+		// 闭包函数内部使用传参参数的值。内部的值为传参的值。同时引用是不同的
+		defer func(index int) {
+		        // index 有一个新地址指向它
+			fmt.Println(a[index]) // index == i
+		}(i)
+		// 后进先出，3 2 1
+	}
+}
+// 控制台输出： 
+//     3
+//     2
+//     1
+```
+
+****
+
+⑤ `defer`所调用的非闭包函数，参数如果是函数，会按顺序先执行（函数参数）
+
+```go
+func calc(index string, a, b int) int {
+	ret := a + b
+	fmt.Println(index, a, b, ret)
+	return ret
+}
+func defer6()  {
+	a := 1
+	b := 2
+	// calc 充当了函数中的函数参数。即使在 defer 的函数中，它作为函数参数，定义的时候也会首先调用函数进行求值
+	// 按照正常的顺序，calc("10", a, b) 首先被调用求值。calc("122", a, b) 排第二被调用
+	defer calc("1", a, calc("10", a, b))
+	defer calc("12",a, calc("122", a, b))
+}
+// 控制台输出：
+/**
+10 1 2 3   // 第一个函数参数
+122 1 2 3  // 第二个函数参数
+12 1 3 4   // 倒数第一个 calc
+1 1 3 4    // 倒数第二个 calc
+*/
+```
